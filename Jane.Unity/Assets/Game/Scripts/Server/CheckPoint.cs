@@ -22,6 +22,13 @@ namespace Jane.Unity
         [SerializeField] private PlayerCameraEffect playerCameraEffect;
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private Transform warpDestination;
+        private DistanceText distanceText;
+
+        public DistanceText DistanceText
+        {
+            get => distanceText;
+            set => distanceText = value;
+        }
 
         private void Awake() => VFX.Play();
 

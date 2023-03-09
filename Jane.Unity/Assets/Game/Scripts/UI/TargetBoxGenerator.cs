@@ -1,13 +1,17 @@
 using Jane.Unity;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class TargetBoxGenerator : MonoBehaviour
 {
+    [SerializeField] private List<CheckPoint> checkPointReferences = new();
+    public List<CheckPoint> CheckPoints => checkPointReferences;
+    private LinkedList<CheckPoint> checkPoints;
+    private CheckPoint currentTargetingCheckPoint;
+
     private Camera mainCam;
-    public CheckPoints checkPoints;
-    public List<GameObject> checkpointList = new();
-    public List<GameObject> onScreenCheckpoint = new();
+    private List<GameObject> checkPointTargetBoxes = new();
     public List<GameObject> enemyList = new();
     public List<GameObject> onScreenEnemy = new();
     public GameObject checkPointTargetBox;
@@ -19,6 +23,17 @@ public class TargetBoxGenerator : MonoBehaviour
     void Start()
     {
         mainCam = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
+        checkPoints = new LinkedList<CheckPoint>(checkPointReferences);
+
+        foreach (var checkPoint in checkPoints)
+        {
+            GameObject targetBox = Instantiate(checkPointTargetBox, transform);
+            targetBox.SetActive(false);
+            checkPoint.DistanceText = targetBox.GetComponent<DistanceText>();
+            checkPointTargetBoxes.Add(targetBox);
+        }
+
+        checkPointTargetBoxes.First().SetActive(true);
     }
 
     void FixedUpdate()
@@ -33,35 +48,20 @@ public class TargetBoxGenerator : MonoBehaviour
         }
     }
 
-    public void Initialize(List<CheckPoint> checkPoints)
-    {
-        if (checkPoints is null) { return; }
-
-        foreach (var checkPoint in checkPoints)
-        {
-            onScreenCheckpoint.Add(Instantiate(checkPointTargetBox, transform));
-        }
-        
-        SetNextTargetBox(0);
-    }
-
     private void UpdateCheckpointBox()
     {
-        int i = checkPoints.idx;
-        if (!checkPoints.goalActive)
-        {
-            bool isInView = IsInScreen(checkpointList[i].transform.position);
-            onScreenCheckpoint[i].GetComponent<CanvasGroup>().alpha = isInView ? 1 : 0;
-            if (isInView)
-            {
-                Rect targetRect = GetBoundsInScreenSpace(checkpointList[i], mainCam);
-                RectTransform targetRectTransform = onScreenCheckpoint[i].gameObject.GetComponent<RectTransform>();
+        bool isInView = IsInScreen(currentTargetingCheckPoint.transform.position);
+        currentTargetingCheckPoint.GetComponent<CanvasGroup>().alpha = isInView ? 1 : 0;
 
-                targetRectTransform.position = new Vector2(targetRect.center.x, targetRect.center.y);
-                targetRectTransform.sizeDelta = new Vector2(Mathf.Max(targetRect.width, minSize.x), Mathf.Max(targetRect.height, minSize.y)) + sizeMargin;
-                onScreenCheckpoint[i].SendMessage("UpdateDistance", checkpointList[i].transform.position);
-            }
-        }
+        if (isInView is false) { return; }
+
+        Rect targetRect = GetBoundsInScreenSpace(currentTargetingCheckPoint.gameObject, mainCam);
+        RectTransform targetRectTransform = currentTargetingCheckPoint.gameObject.GetComponent<RectTransform>();
+
+        targetRectTransform.position = new Vector2(targetRect.center.x, targetRect.center.y);
+        targetRectTransform.sizeDelta = new Vector2(Mathf.Max(targetRect.width, minSize.x), Mathf.Max(targetRect.height, minSize.y)) + sizeMargin;
+
+        currentTargetingCheckPoint.DistanceText.UpdateDistance(currentTargetingCheckPoint.transform.position);
     }
 
     private void UpdatePlayerBox()
@@ -73,7 +73,7 @@ public class TargetBoxGenerator : MonoBehaviour
             if (isInView)
             {
                 Rect targetRect = GetBoundsInScreenSpace(enemyList[i], mainCam);
-                RectTransform targetRectTransform = onScreenEnemy[i].gameObject.GetComponent<RectTransform>();
+                RectTransform targetRectTransform = onScreenEnemy[i].GetComponent<RectTransform>();
 
                 targetRectTransform.position = new Vector2(targetRect.center.x, targetRect.center.y);
                 targetRectTransform.sizeDelta = new Vector2(Mathf.Max(targetRect.width, minSize.x), Mathf.Max(targetRect.height, minSize.y)) + sizeMargin;
@@ -81,21 +81,7 @@ public class TargetBoxGenerator : MonoBehaviour
             }
         }
     }
-
-    public void ResetTargetBox()
-    {
-        foreach (GameObject obj in onScreenCheckpoint)
-        {
-            obj.SetActive(false);
-        }
-    }
-
-    public void SetNextTargetBox(int i)
-    {
-        ResetTargetBox();
-        onScreenCheckpoint[i].SetActive(true);
-    }
-
+    
     public static Rect GetBoundsInScreenSpace(GameObject targetObj, Camera camera)
     {
         Bounds targetBounds = targetObj.GetComponent<Renderer>().bounds;

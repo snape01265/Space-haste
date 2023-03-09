@@ -41,11 +41,10 @@ public class CheckPoints : MonoBehaviour
         {
             nextGate= checkPointArr[gateNo];
             nextGate.SendMessage("Activate");
-            targetBoxGenerator.SetNextTargetBox(gateNo);
+            //targetBoxGenerator.SetNextTargetBox(gateNo);
         }
         else
         {
-            targetBoxGenerator.ResetTargetBox();
             goalActive = true;
         }
     }

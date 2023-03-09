@@ -9,7 +9,6 @@ using UnityEngine.UI;
 public class RankManager : MonoBehaviour
 {
     public static RankManager instance;
-    public StandingsGenerator standingsGenerator;
 
     private Dictionary<string, NetworkPlayer> players = new();
     private Ulid playerID;
@@ -17,13 +16,35 @@ public class RankManager : MonoBehaviour
     private bool isUpdating = false;
     private float switchTime = 0.15f;
 
-    private void Awake() => instance = this;
+    public List<GameObject> standingsBox = new();
+    [SerializeField] private GameObject standingPrefab;
+    
+    private void Awake()
+    {
+        instance = this;
+        playerID = UserInfo.UniqueId;
+    }
 
     void Update()
     {
         if (!isUpdating)
         {
             SetPlayers();
+        }
+    }
+
+    public void AddPlayerStanding()
+    {
+        standingsBox.Add(Instantiate(standingPrefab, transform));
+    }
+
+    public void AddPlayer(NetworkPlayer player)
+    {
+        players.Add(player.UserId, player);
+        AddPlayerStanding();
+        if (player.UniqueId != playerID)
+        {
+            AddPlayerTargetBox(player.gameObject);
         }
     }
 

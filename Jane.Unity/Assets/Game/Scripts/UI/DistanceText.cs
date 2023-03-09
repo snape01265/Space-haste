@@ -14,7 +14,8 @@ public class DistanceText : MonoBehaviour
     {
         player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
     }
-    private void UpdateDistance(Vector3 objectPos)
+    
+    public void UpdateDistance(Vector3 objectPos)
     {
         distance = Vector3.Distance(player.position, objectPos);
         float scale = targetBoxScale / distance;
