@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Jane.Unity;
 using Jane.Unity.ServerShared.Enums;
@@ -21,6 +22,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text minuteText;
     [SerializeField] private TMP_Text secondText;
     [SerializeField] private TMP_Text milisecondText;
+    [Space]
+    [SerializeField] private List<CheckPoint> checkPointReferences = new();
+    public List<CheckPoint> CheckPoints => checkPointReferences;
+    private LinkedList<CheckPoint> checkPoints;
+    [SerializeField] private TargetBoxGenerator targetBoxGenerator;
 
     [Header("Player")]
     [SerializeField] private SpaceshipEngine engine;
@@ -32,6 +38,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip countClip;
     [SerializeField] private AudioClip startClip;
+
+
+    private void Awake()
+    {
+        checkPoints = new LinkedList<CheckPoint>(checkPointReferences);
+        targetBoxGenerator.Initialize(checkPointReferences);
+    }
 
     private void Update() => DebugCurrentState = GameInfo.GameState;
 

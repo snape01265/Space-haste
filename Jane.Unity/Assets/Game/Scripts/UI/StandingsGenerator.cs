@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class StandingsGenerator : MonoBehaviour
 {
-    public List<GameObject> standingsBox = new List<GameObject>();
+    public List<GameObject> standingsBox = new();
     public GameObject standingPrefab;
 
     public void AddPlayerStanding()

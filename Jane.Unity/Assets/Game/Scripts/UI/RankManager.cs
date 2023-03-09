@@ -10,23 +10,14 @@ public class RankManager : MonoBehaviour
 {
     public static RankManager instance;
     public StandingsGenerator standingsGenerator;
-    public TargetBoxGenerator targetBoxGenerator;
 
-    private Dictionary<string, NetworkPlayer> players;
+    private Dictionary<string, NetworkPlayer> players = new();
     private Ulid playerID;
-    private List<KeyValuePair<string, NetworkPlayer>> sortedList = new List<KeyValuePair<string, NetworkPlayer>>();
+    private List<KeyValuePair<string, NetworkPlayer>> sortedList = new();
     private bool isUpdating = false;
-    public CheckPoints checkPoints;
     private float switchTime = 0.15f;
 
-    private void Awake()
-    {
-        instance = this;
-    }
-    void Start()
-    {
-        players = new Dictionary<string, NetworkPlayer>();
-    }
+    private void Awake() => instance = this;
 
     void Update()
     {
@@ -36,31 +27,12 @@ public class RankManager : MonoBehaviour
         }
     }
 
-    public void GetLocalPlayer(Ulid currentLocalID)
-    {
-        playerID = currentLocalID;
-    }
-
-    public void GetPlayers(NetworkPlayer id)
-    {
-        // Get players through playerID and add them to List
-        players.Add(id.UserId, id);
-        standingsGenerator.AddPlayerStanding();
-        if (id.UniqueId != playerID)
-        {
-            targetBoxGenerator.AddPlayerTargetBox(id.gameObject);
-        }
-    }
-
     void SetPlayers()
     {
         IOrderedEnumerable<KeyValuePair<string, NetworkPlayer>> sortedPlayer = players.Where(x => !x.Value.IsFinished)
                                                                                       .OrderByDescending(x => x.Value.activeCheckpointIndex)
                                                                                       .ThenBy(x => x.Value.distanceToCheckpoint);
-        foreach (KeyValuePair<string, NetworkPlayer> item in sortedPlayer)
-        { 
-            Debug.Log(item.Key);
-        }
+        
         List<KeyValuePair<string, NetworkPlayer>> tempList = sortedPlayer.ToList();
 
         if (sortedList.Any() && !sortedList.SequenceEqual(tempList) && tempList.Count == sortedList.Count)
@@ -106,15 +78,7 @@ public class RankManager : MonoBehaviour
         }
         sortedList = tempList;
     }
-
-    public float GetDistance(GameObject playerObj, GameObject checkpointObj)
-    {
-        Vector3 playerLocation = playerObj.transform.position;
-        Vector3 checkpointLocation = checkpointObj.transform.position;
-        float distance = Vector3.Distance(playerLocation, checkpointLocation);
-        return distance;
-    }
-
+    
     IEnumerator MoveStandings(RectTransform rectTransformA, RectTransform rectTransformB, IOrderedEnumerable<KeyValuePair<string, NetworkPlayer>> sorted, float duration)
     {
         Vector2 startPosA = rectTransformA.anchoredPosition;
@@ -146,6 +110,7 @@ public class RankManager : MonoBehaviour
             standingsGenerator.standingsBox[i].GetComponentInChildren<TMP_Text>().text = " " + (i + 1) + "   " + item.Key;
             i++;
         }
+
         isUpdating = false;
         rectTransformA.anchoredPosition = endPosA;
         rectTransformB.anchoredPosition = endPosB;

@@ -1,29 +1,24 @@
-using System.Collections;
+using Jane.Unity;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class TargetBoxGenerator : MonoBehaviour
 {
     private Camera mainCam;
     public CheckPoints checkPoints;
-    public List<GameObject> checkpointList = new List<GameObject>();
-    public List<GameObject> onScreenCheckpoint = new List<GameObject>();
-    public List<GameObject> enemyList = new List<GameObject>();
-    public List<GameObject> onScreenEnemy = new List<GameObject>();
-    public GameObject checkpointPrefab;
+    public List<GameObject> checkpointList = new();
+    public List<GameObject> onScreenCheckpoint = new();
+    public List<GameObject> enemyList = new();
+    public List<GameObject> onScreenEnemy = new();
+    public GameObject checkPointTargetBox;
     public GameObject enemyPrefab;
 
-    [SerializeField] private Vector2 minSize = new Vector2(100, 100);
-    [SerializeField] private Vector2 sizeMargin = new Vector2(-50, -50);
+    [SerializeField] private Vector2 minSize = new(100, 100);
+    [SerializeField] private Vector2 sizeMargin = new(-50, -50);
 
     void Start()
     {
         mainCam = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
-        if (checkPoints != null)
-        {
-            AddCheckpointTargetBox();
-        }
     }
 
     void FixedUpdate()
@@ -36,6 +31,18 @@ public class TargetBoxGenerator : MonoBehaviour
         {
             UpdatePlayerBox();
         }
+    }
+
+    public void Initialize(List<CheckPoint> checkPoints)
+    {
+        if (checkPoints is null) { return; }
+
+        foreach (var checkPoint in checkPoints)
+        {
+            onScreenCheckpoint.Add(Instantiate(checkPointTargetBox, transform));
+        }
+        
+        SetNextTargetBox(0);
     }
 
     private void UpdateCheckpointBox()
@@ -139,21 +146,7 @@ public class TargetBoxGenerator : MonoBehaviour
         }
         return false;
     }
-
-    public void AddCheckpointTargetBox()
-    {
-        foreach (GameObject checkPoint in checkPoints.checkPointArr)
-        {
-            checkpointList.Add(checkPoint);
-        }
-        for (int i = 0; i < checkpointList.Count; i++)
-        {
-            onScreenCheckpoint.Add(Instantiate(checkpointPrefab));
-            onScreenCheckpoint[i].transform.parent = transform;
-        }
-        SetNextTargetBox(0);
-    }
-
+    
     public void AddPlayerTargetBox(GameObject targetObj)
     {
         enemyList.Add(targetObj);
