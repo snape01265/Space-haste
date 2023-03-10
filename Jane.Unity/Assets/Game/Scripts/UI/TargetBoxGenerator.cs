@@ -12,10 +12,11 @@ public class TargetBoxGenerator : MonoBehaviour
 
     private Camera mainCam;
     private List<GameObject> checkPointTargetBoxes = new();
-    public List<GameObject> enemyList = new();
-    public List<GameObject> onScreenEnemy = new();
-    public GameObject checkPointTargetBox;
-    public GameObject enemyPrefab;
+    public List<NetworkPlayer> enemyList = new();
+    public List<GameObject> enemyTargetBoxes = new();
+
+    public GameObject checkPointTargetBoxPrefab;
+    public GameObject enemyTargetBoxPrefab;
 
     [SerializeField] private Vector2 minSize = new(100, 100);
     [SerializeField] private Vector2 sizeMargin = new(-50, -50);
@@ -27,7 +28,7 @@ public class TargetBoxGenerator : MonoBehaviour
 
         foreach (var checkPoint in checkPoints)
         {
-            GameObject targetBox = Instantiate(checkPointTargetBox, transform);
+            GameObject targetBox = Instantiate(checkPointTargetBoxPrefab, transform);
             targetBox.SetActive(false);
             checkPoint.DistanceText = targetBox.GetComponent<DistanceText>();
             checkPointTargetBoxes.Add(targetBox);
@@ -69,15 +70,16 @@ public class TargetBoxGenerator : MonoBehaviour
         for (int i = 0; i < enemyList.Count; i++)
         {
             bool isInView = IsInScreen(enemyList[i].transform.position);
-            onScreenEnemy[i].GetComponent<CanvasGroup>().alpha = isInView ? 1 : 0;
+            enemyTargetBoxes[i].GetComponent<CanvasGroup>().alpha = isInView ? 1 : 0;
+
             if (isInView)
             {
-                Rect targetRect = GetBoundsInScreenSpace(enemyList[i], mainCam);
-                RectTransform targetRectTransform = onScreenEnemy[i].GetComponent<RectTransform>();
+                Rect targetRect = GetBoundsInScreenSpace(enemyList[i].gameObject, mainCam);
+                RectTransform targetRectTransform = enemyTargetBoxes[i].GetComponent<RectTransform>();
 
                 targetRectTransform.position = new Vector2(targetRect.center.x, targetRect.center.y);
                 targetRectTransform.sizeDelta = new Vector2(Mathf.Max(targetRect.width, minSize.x), Mathf.Max(targetRect.height, minSize.y)) + sizeMargin;
-                onScreenEnemy[i].SendMessage("UpdateDistance", enemyList[i].transform.position);
+                enemyTargetBoxes[i].GetComponent<DistanceText>().UpdateDistance(enemyList[i].transform.position);
             }
         }
     }
@@ -133,14 +135,12 @@ public class TargetBoxGenerator : MonoBehaviour
         return false;
     }
     
-    public void AddPlayerTargetBox(GameObject targetObj)
+    public void AddEnemyTargetBox(NetworkPlayer enemyPlayer)
     {
-        enemyList.Add(targetObj);
-        onScreenEnemy.Add(Instantiate(enemyPrefab));
-        for (int i = 0; i < enemyList.Count; i++)
-        {
-            onScreenEnemy[i].transform.parent = transform;
-            onScreenEnemy[i].SendMessage("SetName", enemyList[i].GetComponent<NetworkPlayer>().UserId);
-        }
+        enemyList.Add(enemyPlayer);
+        GameObject targetBox = Instantiate(enemyTargetBoxPrefab, transform);
+
+        enemyTargetBoxes.Add(targetBox);
+        targetBox.GetComponent<DistanceText>().SetName(enemyPlayer.UserId);
     }
 }

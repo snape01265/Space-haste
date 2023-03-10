@@ -27,7 +27,8 @@ public class DistanceText : MonoBehaviour
         distance = Mathf.RoundToInt(distance);
         distanceText.text = $"{distance}m";
     }
-    private void SetName(string name)
+
+    public void SetName(string name)
     {
         nameText.text = $"{name}";
     }

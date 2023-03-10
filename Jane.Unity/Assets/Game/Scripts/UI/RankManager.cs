@@ -11,40 +11,35 @@ public class RankManager : MonoBehaviour
     public static RankManager instance;
 
     private Dictionary<string, NetworkPlayer> players = new();
-    private Ulid playerID;
+    private Ulid myUniqueId;
     private List<KeyValuePair<string, NetworkPlayer>> sortedList = new();
     private bool isUpdating = false;
     private float switchTime = 0.15f;
 
-    public List<GameObject> standingsBox = new();
+    [SerializeField] private TargetBoxGenerator targetBoxGenerator;
     [SerializeField] private GameObject standingPrefab;
+    private List<GameObject> standingsBox = new();
     
     private void Awake()
     {
         instance = this;
-        playerID = UserInfo.UniqueId;
+        myUniqueId = UserInfo.UniqueId;
     }
 
     void Update()
     {
-        if (!isUpdating)
-        {
-            SetPlayers();
-        }
+        if (!isUpdating) { SetPlayers(); }
     }
 
-    public void AddPlayerStanding()
-    {
-        standingsBox.Add(Instantiate(standingPrefab, transform));
-    }
-
-    public void AddPlayer(NetworkPlayer player)
+    // TODO: Remove StandingsGenerator, Move RankManager to StandingsGenerator's GameObject for parenting
+    public void AddPlayerToRanking(NetworkPlayer player)
     {
         players.Add(player.UserId, player);
-        AddPlayerStanding();
-        if (player.UniqueId != playerID)
+        standingsBox.Add(Instantiate(standingPrefab, transform));
+
+        if (player.UniqueId != myUniqueId)
         {
-            AddPlayerTargetBox(player.gameObject);
+            targetBoxGenerator.AddEnemyTargetBox(player);
         }
     }
 
@@ -69,11 +64,11 @@ public class RankManager : MonoBehaviour
                 if (i == change1)
                 {
                     isUpdating = true;
-                    GameObject tempBox = standingsGenerator.standingsBox[change1];
-                    standingsGenerator.standingsBox[change1] = standingsGenerator.standingsBox[change2];
-                    standingsGenerator.standingsBox[change2] = tempBox;
+                    GameObject tempBox = standingsBox[change1];
+                    standingsBox[change1] = standingsBox[change2];
+                    standingsBox[change2] = tempBox;
 
-                    RectTransform first = standingsGenerator.standingsBox[change1].GetComponent<RectTransform>();
+                    RectTransform first = standingsBox[change1].GetComponent<RectTransform>();
                     RectTransform second = tempBox.GetComponent<RectTransform>();
                     StartCoroutine(MoveStandings(first, second, sortedPlayer, switchTime));
                 }
@@ -85,18 +80,19 @@ public class RankManager : MonoBehaviour
             int i = 0;
             foreach (KeyValuePair<string, NetworkPlayer> item in sortedPlayer)
             {
-                if (item.Value.UniqueId == playerID)
+                if (item.Value.UniqueId == myUniqueId)
                 {
-                    standingsGenerator.standingsBox[i].GetComponent<Image>().color = new Color(1.0f, 0.5f, 0f, 1.0f);
+                    standingsBox[i].GetComponent<Image>().color = new Color(1.0f, 0.5f, 0f, 1.0f);
                 }
                 else
                 {
-                    standingsGenerator.standingsBox[i].GetComponent<Image>().color = new Color(0f, 0f, 0f, 1.0f);
+                    standingsBox[i].GetComponent<Image>().color = new Color(0f, 0f, 0f, 1.0f);
                 }
-                standingsGenerator.standingsBox[i].GetComponentInChildren<TMP_Text>().text = " " + (i + 1) + "   " + item.Key;
+                standingsBox[i].GetComponentInChildren<TMP_Text>().text = " " + (i + 1) + "   " + item.Key;
                 i++;
             }
         }
+
         sortedList = tempList;
     }
     
@@ -120,15 +116,15 @@ public class RankManager : MonoBehaviour
         int i = 0;
         foreach (KeyValuePair<string, NetworkPlayer> item in sorted)
         {
-            if (item.Value.UniqueId == playerID)
+            if (item.Value.UniqueId == myUniqueId)
             {
-                standingsGenerator.standingsBox[i].GetComponent<Image>().color = new Color(1.0f, 0.5f, 0f, 1.0f);
+                standingsBox[i].GetComponent<Image>().color = new Color(1.0f, 0.5f, 0f, 1.0f);
             }
             else
             {
-                standingsGenerator.standingsBox[i].GetComponent<Image>().color = new Color(0f, 0f, 0f, 1.0f);
+                standingsBox[i].GetComponent<Image>().color = new Color(0f, 0f, 0f, 1.0f);
             }
-            standingsGenerator.standingsBox[i].GetComponentInChildren<TMP_Text>().text = " " + (i + 1) + "   " + item.Key;
+            standingsBox[i].GetComponentInChildren<TMP_Text>().text = " " + (i + 1) + "   " + item.Key;
             i++;
         }
 
